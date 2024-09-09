@@ -2,18 +2,17 @@ import React, { Component } from "react";
 import {
   View,
   Text,
-  StatusBar,
   StyleSheet,
-  PermissionsAndroid,
   TouchableOpacity,
   Switch,
+  Platform,
 } from "react-native";
-import { Svg, Path, Circle } from "react-native-svg";
+import { StatusBar } from 'expo-status-bar';
+import { Svg, Path } from 'react-native-svg';
 import Tuner from "./tuner";
-import Note from "./note";
 import Meter from "./meter";
 
-export default class App extends Component {
+export default class GuitarTunerApp extends Component {
   state = {
     note: {
       name: "A",
@@ -30,9 +29,11 @@ export default class App extends Component {
 
   async componentDidMount() {
     if (Platform.OS === "android") {
-      await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-      ]);
+      const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
+      if (status !== 'granted') {
+        console.log('Permission to access audio was denied');
+        return;
+      }
     }
 
     const tuner = new Tuner();
@@ -75,7 +76,7 @@ export default class App extends Component {
 
     return (
       <View style={styles.container}>
-        <StatusBar backgroundColor="#000" barStyle="light-content" />
+        <StatusBar style="light" />
         <View style={styles.header}>
           <Text style={styles.title}>GUITAR TUNIO</Text>
           <Svg height="24" width="24" viewBox="0 0 24 24">
@@ -120,6 +121,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+    marginTop: Platform.OS === 'ios' ? 40 : 20,
   },
   title: {
     fontSize: 24,

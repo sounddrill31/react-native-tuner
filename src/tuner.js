@@ -1,50 +1,92 @@
-import Recording from "react-native-recording";
-import PitchFinder from "pitchfinder";
+import { useState, useEffect } from 'react';
+import { Audio } from 'expo-av';
+import PitchFinder from 'pitchfinder';
 
-export default class Tuner {
-  middleA = 440;
-  semitone = 69;
-  noteStrings = [
+const MainScreen = () => {
+  const [middleA] = useState(440);
+  const [semitone] = useState(69);
+  const [noteStrings] = useState([
     "C",
-    "C♯",
+    "C#",
     "D",
-    "D♯",
+    "D#",
     "E",
     "F",
-    "F♯",
+    "F#",
     "G",
-    "G♯",
+    "G#",
     "A",
-    "A♯",
+    "A#",
     "B",
-  ];
+  ]);
+  const [sampleRate] = useState(22050);
+  const [bufferSize] = useState(2048);
+  const [pitchFinder] = useState(new PitchFinder.YIN({ sampleRate: sampleRate }));
+  const [audioSubscription, setAudioSubscription] = useState(null);
+  const [audioRecording, setAudioRecording] = useState(null);
 
-  constructor(sampleRate = 22050, bufferSize = 2048) {
-    this.sampleRate = sampleRate;
-    this.bufferSize = bufferSize;
-    this.pitchFinder = new PitchFinder.YIN({ sampleRate: this.sampleRate });
-  }
-
-  start() {
-    Recording.init({
-      sampleRate: this.sampleRate,
-      bufferSize: this.bufferSize,
-    });
-    Recording.start();
-    Recording.addRecordingEventListener((data) => {
-      const frequency = this.pitchFinder(data);
-      if (frequency && this.onNoteDetected) {
-        const note = this.getNote(frequency);
-        this.onNoteDetected({
-          name: this.noteStrings[note % 12],
-          value: note,
-          cents: this.getCents(frequency, note),
-          octave: parseInt(note / 12) - 1,
-          frequency: frequency,
+  useEffect(() => {
+    const start = async () => {
+      try {
+        await Audio.requestPermissionsAsync();
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
         });
+
+        const recording = new Audio.Recording();
+        await recording.prepareToRecordAsync(
+          Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+        );
+        await recording.startAsync();
+
+        const subscription = recording.setOnRecordingStatusUpdate(
+          onRecordingStatusUpdate
+        );
+        setAudioSubscription(subscription);
+        setAudioRecording(recording);
+      } catch (error) {
+        console.error('Failed to start recording', error);
       }
-    });
-  }
+    };
+
+    start();
+
+    return () => {
+      stop();
+    };
+  }, []);
+
+  const stop = () => {
+    if (audioSubscription) {
+      audioSubscription.remove();
+      setAudioSubscription(null);
+    }
+
+    if (audioRecording) {
+      audioRecording.stopAndUnloadAsync();
+      setAudioRecording(null);
+    }
+  };
+
+  const onRecordingStatusUpdate = (status) => {
+    if (status.isRecording) {
+      const { audioData } = status;
+      if (audioData) {
+        const frequency = pitchFinder(audioData);
+        if (frequency && onNoteDetected) {
+          const note = getNote(frequency);
+          onNoteDetected({
+            name: noteStrings[note % 12],
+            value: note,
+            cents: getCents(frequency, note),
+            octave: parseInt(note / 12) - 1,
+            frequency: frequency,
+          });
+        }
+      }
+    }
+  };
 
   /**
    * get musical note from frequency
@@ -52,10 +94,10 @@ export default class Tuner {
    * @param {number} frequency
    * @returns {number}
    */
-  getNote(frequency) {
-    const note = 12 * (Math.log(frequency / this.middleA) / Math.log(2));
-    return Math.round(note) + this.semitone;
-  }
+  const getNote = (frequency) => {
+    const note = 12 * (Math.log(frequency / middleA) / Math.log(2));
+    return Math.round(note) + semitone;
+  };
 
   /**
    * get the musical note's standard frequency
@@ -63,9 +105,9 @@ export default class Tuner {
    * @param note
    * @returns {number}
    */
-  getStandardFrequency(note) {
-    return this.middleA * Math.pow(2, (note - this.semitone) / 12);
-  }
+  const getStandardFrequency = (note) => {
+    return middleA * Math.pow(2, (note - semitone) / 12);
+  };
 
   /**
    * get cents difference between given frequency and musical note's standard frequency
@@ -74,10 +116,16 @@ export default class Tuner {
    * @param {int} note
    * @returns {int}
    */
-  getCents(frequency, note) {
+  const getCents = (frequency, note) => {
     return Math.floor(
-      (1200 * Math.log(frequency / this.getStandardFrequency(note))) /
+      (1200 * Math.log(frequency / getStandardFrequency(note))) /
         Math.log(2)
     );
-  }
-}
+  };
+
+  // Add your component JSX and other logic here
+
+  return null;
+};
+
+export default MainScreen;
