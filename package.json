@@ -1,16 +1,24 @@
 {
-  "private": true,
+  "name": "exp",
+  "version": "1.0.0",
+  "main": "expo/AppEntry.js",
   "scripts": {
-    "start": "react-native start",
-    "reload": "adb reverse tcp:8081 tcp:8081 && adb shell input text rr",
-    "ios": "react-native run-ios",
-    "android": "react-native run-android",
-    "release-android": "react-native run-android --variant=release"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
   },
   "dependencies": {
-    "pitchfinder": "^2.3.1",
-    "react": "16.11.0",
-    "react-native": "0.62.2",
-    "react-native-recording": "^0.5.1"
-  }
+    "expo": "~51.0.28",
+    "expo-status-bar": "~1.12.1",
+    "pitchfinder": "^2.3.2",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-recording": "^0.5.1",
+    "react-native-svg": "15.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
+  },
+  "private": true
 }

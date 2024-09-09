@@ -11,3 +11,6 @@ A tuner app written in react native, support ios and android.
 
 ### iOS
 <img src="https://user-images.githubusercontent.com/1709072/45736960-178e2600-bc1f-11e8-9eca-7cdd5dc5ac07.jpg" width=300>
+
+npx expo install --fix
+npx expo install react react-native-svg react-native-recording pitchfinder
